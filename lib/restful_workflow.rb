@@ -29,7 +29,7 @@ module RestfulWorkflow
 
   module Filters
     def self.included(base)
-      base.before_filter :load_step
+      base.prepend_before_filter :load_step
     end
 
     def load_step
@@ -50,7 +50,7 @@ module RestfulWorkflow
       @current_object = @step.data.new(params[:current_object])
       @current_object.controller = self if @current_object.respond_to?(:controller)
       after :update
-      if @data.save
+      if @current_object.save
         redirect_to @step.go_forward(self)
       else
         render :action => @step.name
@@ -186,18 +186,6 @@ module RestfulWorkflow
       controller_class.steps.last == self
     end
     
-    def next_step
-      unless last?
-        controller.steps[controller.steps.index(self) + 1]
-      end
-    end
-    
-    def previous_step
-      unless first?
-        controller.steps[controller.steps.index(self) - 1]
-      end
-    end
-    
     def method_missing(method, *args, &block)
       case method.to_s
       when /^before_/
@@ -225,5 +213,18 @@ module RestfulWorkflow
         end
       end
     end
+
+    def next_step
+      unless last?
+        controller_class.steps[controller_class.steps.index(self) + 1]
+      end
+    end
+    
+    def previous_step
+      unless first?
+        controller_class.steps[controller_class.steps.index(self) - 1]
+      end
+    end
+    
   end
 end
