@@ -91,6 +91,7 @@ module RestfulWorkflow
       @stage = stage
       @before_callbacks = {}
       @after_callbacks = {}
+      initialize_data_class
     end
     
     def controller_class
@@ -115,19 +116,7 @@ module RestfulWorkflow
       if value
         @data = value
       elsif block_given?
-        @data = Class.new(ActiveForm)
-        _name = self.name
-        @data.class_eval do
-          attr_accessor :controller
-          def save
-            returning super do |valid|
-              if valid
-                controller.session[controller.controller_name] ||= {}
-                controller.session[controller.controller_name][_name] = self.attributes
-              end
-            end
-          end
-        end
+        initialize_data_class
         @data.class_eval(&block)
       end
       @data
@@ -199,6 +188,14 @@ module RestfulWorkflow
     
     def next_step
       unless last?
+        controller.steps[controller.steps.index(self) + 1]
+      end
+    end
+    
+    def previous_step
+      unless first?
+        controller.steps[controller.steps.index(self) - 1]
+      end
     end
     
     def method_missing(method, *args, &block)
@@ -209,6 +206,23 @@ module RestfulWorkflow
         after method.to_s.sub(/^after_/, ''), &block
       else
         super
+      end
+    end
+    
+    private
+    def initialize_data_class
+      @data = Class.new(ActiveForm)
+      _name = self.name
+      @data.class_eval do
+        attr_accessor :controller
+        def save
+          returning super do |valid|
+            if valid
+              controller.session[controller.controller_name] ||= {}
+              controller.session[controller.controller_name][_name] = self.attributes
+            end
+          end
+        end
       end
     end
   end

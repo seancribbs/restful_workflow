@@ -140,6 +140,30 @@ describe "RestfulWorkflow::Step" do
         end
         @one.go_forward(@controller).should == {:controller => "foo", :id => "five"}
       end
+      
+      it "to something other than a block or symbol should determine the next step's URL" do
+        @one.forward "/"
+        @one.go_forward(@controller).should == "/"
+      end
+    end
+    
+    describe "when the previous step is assigned manually" do
+      it "to a symbol should determine the previous step's URL by name" do
+        @one.back :three
+        @one.go_back(@controller).should == {:id => "three"}
+      end
+      
+      it "to a block should evaluate the block in the context of the controller to determine the previous step's URL" do
+        @one.back do
+          :controller => controller_name, :id => "five"
+        end
+        @one.go_back(@controller).should == {:controller => "foo", :id => "five"}
+      end
+      
+      it "to something other than a block or symbol should determine the previous step's URL" do
+        @one.back "/"
+        @one.go_back(@controller).should == "/"
+      end
     end
   end
   
