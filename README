@@ -1,0 +1,39 @@
+RestfulWorkflow
+===============
+
+This plugin provides interview-style workflow in a controller, similar to 
+TurboTax, but without the need to save models to the database immediately.
+All data is stored in the session unless overridden.
+
+Using this DSL implements the 'show' and 'update' actions in your controller,
+so please do not override those unless you wish to break the workflow.  When
+rendering, each step will look for a template of the same name.
+
+Example
+=======
+
+class InterviewController < ApplicationController
+
+  stage do |steps|
+    steps.start do
+      data do
+        column :first_name, :type => :string
+        validates_presence_of :first_name
+      end
+    end
+    
+    steps.contact_info do
+      before { @name = self.class.find_step('start').load_data(self).first_name }
+      data do
+        column :email, :type => :string
+        column :accept, :type => :boolean
+        validates_acceptance_of :accept
+      end
+      forward "/profile"
+    end
+  end
+
+end
+
+
+Copyright (c) 2008 [name of plugin creator], released under the MIT license
