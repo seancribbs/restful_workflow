@@ -53,7 +53,8 @@ module RestfulWorkflow
 
   module Actions
     def index
-      redirect_to :action => "show", :id => self.class.steps.first.name
+      last_completed_step = self.class.steps.find {|step| step.controller = self; !step.completed? }
+      redirect_to :action => "show", :id => last_completed_step.name
     end
     
     def show
