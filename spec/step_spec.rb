@@ -22,6 +22,9 @@ describe "RestfulWorkflow::Step" do
   it "should have a long_name accessor" do
     @one.should respond_to(:long_name)
     @one.should respond_to(:long_name=)
+    @one.long_name.should be_nil
+    @one.long_name "Test step"
+    @one.long_name.should == "Test step"
   end
   
   it "should accept blocks for before callbacks" do
