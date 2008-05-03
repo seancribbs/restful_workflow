@@ -41,7 +41,7 @@ module RestfulWorkflow
 
   module Filters
     def self.included(base)
-      base.prepend_before_filter :load_step
+      base.prepend_before_filter :load_step, :only => [:show, :update]
     end
 
     def load_step
