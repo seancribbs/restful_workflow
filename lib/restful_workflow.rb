@@ -16,6 +16,7 @@ module RestfulWorkflow
       include Filters
       include Callbacks
       attr_reader :current_object
+      helper ::RestfulWorkflow::Helpers
       yield Stage.new(self)
       self.workflow_active = true
       self
@@ -25,6 +26,16 @@ module RestfulWorkflow
   module SingletonMethods
     def find_step(name)
       self.steps.find { |s| s.name == name }
+    end
+  end
+
+  module Helpers
+    def link_forward(contents)
+      link_to contents, @step.forward_url
+    end
+    
+    def link_back(contents)
+      link_to contents, @step.back_url
     end
   end
 
@@ -103,11 +114,8 @@ module RestfulWorkflow
     end
     
     def long_name(new_val=nil)
-      unless new_val.nil?
-        @long_name = new_val
-      else
-        @long_name
-      end
+      @long_name = new_val if new_val
+      @long_name
     end
     
     def controller_class
