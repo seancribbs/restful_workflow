@@ -42,4 +42,10 @@ describe "RestfulWorkflow::Filters" do
     @controller.load_current_object
     @controller.send(:instance_variable_get, "@current_object").should == @data
   end
+  
+  it "should add a before filter to load the current object" do
+    @kontroller.filter_chain.should_not be_empty
+    @kontroller.find_filter(:load_current_object).should_not be_nil
+    @kontroller.find_filter(:load_current_object).should be_before
+  end
 end
