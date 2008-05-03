@@ -192,6 +192,7 @@ module RestfulWorkflow
     def forward_url
       if @forward
         url = @forward.respond_to?(:call) ? controller.instance_eval(&@forward) : @forward
+        url = { :id => url } if url.kind_of?(Symbol)
       end
       url || { :id => (next_step || self).name } 
     end
@@ -213,6 +214,7 @@ module RestfulWorkflow
     def back_url
       if @back
         url = @back.respond_to?(:call) ? controller.instance_eval(&@back) : @back
+        url = { :id => url } if url.kind_of?(Symbol)
       end
       url || { :id => (previous_step || self).name }
     end

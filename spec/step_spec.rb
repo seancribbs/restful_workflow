@@ -175,11 +175,10 @@ describe "RestfulWorkflow::Step" do
         @one.forward_url.should == "/"
       end
       
-      it "to a block that evals to nil should determine the next step's URL to be the default" do
-        @one.forward do
-        end
-        @one.forward_url.should == {:id => "two"}
-      end
+      it "to a block which evals to a symbol results in a URL to the step by that name" do
+        @one.forward { :two }
+        @one.forward_url.should == {:id => :two}
+      end      
     end
     
     describe "when the previous step is assigned manually" do
@@ -200,12 +199,11 @@ describe "RestfulWorkflow::Step" do
         @one.back "/"
         @one.back_url.should == "/"
       end
-
-      it "to a block that evals to nil should determine the previous step's URL to be the default" do
-        @one.back do
-        end
-        @one.back_url.should == {:id => "one"}
-      end
+      
+      it "to a block which evals to a symbol results in a URL to the step by that name" do
+        @one.back { :two }
+        @one.back_url.should == {:id => :two}
+      end      
     end
   end
   
