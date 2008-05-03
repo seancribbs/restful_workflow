@@ -38,6 +38,10 @@ module RestfulWorkflow
   end
 
   module Actions
+    def index
+      redirect_to :action => "show", :id => self.class.steps.first.name
+    end
+    
     def show
       before :show
       @current_object = @step.load_data(self)
