@@ -27,6 +27,14 @@ describe "RestfulWorkflow::Step" do
     @step.after(:update).should be_kind_of(Proc)
   end
   
+  it "should have a default data type" do
+    @step.data.should_not be_nil
+    @step.data.should be_kind_of(Class)
+    @step.data.superclass.should == ActiveForm
+    @step.data.instance_methods.should include("controller")
+    @step.data.instance_methods.should include("controller=")
+  end
+  
   it "should accept a class as its data type" do
     class Foo; end
     @step.data Foo
@@ -37,7 +45,7 @@ describe "RestfulWorkflow::Step" do
     @step.data do
       column :name, :type => :string
     end
-    @step.data.should be_kind_of(ActiveForm)
+    @step.data.superclass.should == ActiveForm
     @step.data.new.should respond_to(:name)
   end
   
@@ -56,12 +64,12 @@ describe "RestfulWorkflow::Step" do
 
     it "should not be complete if its data does not exist in the session" do
       @controller.should_receive(:session).and_return({})
-      @step.should_not be_complete(@controller)
+      @step.should_not be_completed(@controller)
     end
 
     it "should be complete if its data exists in the session" do
       @controller.should_receive(:session).and_return({'foo' => {'one' => "data"}})
-      @step.should be_complete(@controller)
+      @step.should be_completed(@controller)
     end
 
     it "should load its data from the session" do
@@ -72,6 +80,12 @@ describe "RestfulWorkflow::Step" do
   
   describe "in a series of steps" do
     before :each do
+      @controller = @kontroller.new
+      class << @controller
+        def controller_name
+          "foo"
+        end
+      end
       @two = @stage.two
       @three = @stage.three
     end
@@ -89,13 +103,13 @@ describe "RestfulWorkflow::Step" do
     end
     
     it "should determine the default next step" do
-      @one.next_step.should == @two
-      @two.next_step.should == @three
+      @one.send(:next_step).should == @two
+      @two.send(:next_step).should == @three
     end
     
     it "should determine the default previous step" do
-      @two.previous_step.should == @one
-      @three.previous_step.should == @two
+      @two.send(:previous_step).should == @one
+      @three.send(:previous_step).should == @two
     end
     
     it "should determine the next step's URL" do
@@ -105,12 +119,12 @@ describe "RestfulWorkflow::Step" do
     
     it "should determine the previous step's URL" do
       @two.go_back(@controller).should == {:id => "one"}
-      @three.go_back(@controller).should == {:id => "three"}
+      @three.go_back(@controller).should == {:id => "two"}
     end
     
     describe "when first" do
       it "should have a nil default previous step" do
-        @one.previous_step.should be_nil
+        @one.send(:previous_step).should be_nil
       end
       
       it "should determine the previous step's URL to be its own" do
@@ -120,7 +134,7 @@ describe "RestfulWorkflow::Step" do
     
     describe "when last" do
       it "should have a nil default next step" do
-        @three.next_step.should be_nil
+        @three.send(:next_step).should be_nil
       end
       
       it "should determine the next step's URL to be its own" do
@@ -136,7 +150,7 @@ describe "RestfulWorkflow::Step" do
       
       it "to a block should evaluate the block in the context of the controller to determine the next step's URL" do
         @one.forward do
-          :controller => controller_name, :id => "five"
+          { :controller => controller_name, :id => "five" }
         end
         @one.go_forward(@controller).should == {:controller => "foo", :id => "five"}
       end
@@ -155,7 +169,7 @@ describe "RestfulWorkflow::Step" do
       
       it "to a block should evaluate the block in the context of the controller to determine the previous step's URL" do
         @one.back do
-          :controller => controller_name, :id => "five"
+          {:controller => controller_name, :id => "five"}
         end
         @one.go_back(@controller).should == {:controller => "foo", :id => "five"}
       end
