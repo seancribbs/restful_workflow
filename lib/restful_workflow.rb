@@ -54,7 +54,7 @@ module RestfulWorkflow
       @current_object = @step.data.new(params[:current_object])
       @current_object.controller = self if @current_object.respond_to?(:controller)
       after :update
-      if @current_object.valid?
+      if @current_object.save
         redirect_to @step.go_forward(self)
       else
         before :show
@@ -212,7 +212,7 @@ module RestfulWorkflow
           returning super do |valid|
             if valid
               controller.session[controller.controller_name] ||= {}
-              controller.session[controller.controller_name][#{name}.intern] = self.attributes
+              controller.session[controller.controller_name]['#{name}'] = self.attributes
             end
           end
         end
