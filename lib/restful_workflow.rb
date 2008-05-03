@@ -200,18 +200,17 @@ module RestfulWorkflow
     private
     def initialize_data_class
       @data = Class.new(ActiveForm)
-      _name = self.name
-      @data.class_eval do
+      @data.class_eval %Q{
         attr_accessor :controller
         def save
           returning super do |valid|
             if valid
               controller.session[controller.controller_name] ||= {}
-              controller.session[controller.controller_name][_name] = self.attributes
+              controller.session[controller.controller_name][#{name}] = self.attributes
             end
           end
         end
-      end
+      }
     end
 
     def next_step
