@@ -52,6 +52,10 @@ describe "RestfulWorkflow::DSL" do
       it "should include callbacks" do
         @klass.included_modules.should include(RestfulWorkflow::Callbacks)
       end
+      
+      it "should add a current_object accessor" do
+        @klass.new.should respond_to(:current_object)
+      end
     end
   end
 end

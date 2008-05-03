@@ -15,6 +15,7 @@ module RestfulWorkflow
       include Actions
       include Filters
       include Callbacks
+      attr_reader :current_object
       yield Stage.new(self)
       self.workflow_active = true
       self
