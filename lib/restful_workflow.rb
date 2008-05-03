@@ -164,14 +164,13 @@ module RestfulWorkflow
       end
     end
 
-    def go_forward
+    def forward_url
       if @forward
         @forward.respond_to?(:call) ? controller.instance_eval(&@forward) : @forward
       else
         { :id => (next_step || self).name } 
       end
     end
-    alias :forward_url :go_forward
     
     def back(value=nil, &block)
       raise ArgumentError, "Value or block required" unless value || block_given?
@@ -187,14 +186,13 @@ module RestfulWorkflow
       end
     end
 
-    def go_back
+    def back_url
       if @back
         @back.respond_to?(:call) ? controller.instance_eval(&@back) : @back
       else
         { :id => (previous_step || self).name }
       end
     end
-    alias :back_url :go_back
     
     def first?
       controller_class.steps.first == self
