@@ -163,8 +163,9 @@ describe "RestfulWorkflow::Step" do
       end
       
       it "to a block should evaluate the block in the context of the controller to determine the next step's URL" do
+        @controller.send(:instance_variable_set, "@current_object", "foo")
         @one.forward do
-          { :controller => controller_name, :id => "five" }
+          { :controller => current_object, :id => "five" }
         end
         @one.forward_url.should == {:controller => "foo", :id => "five"}
       end
@@ -182,8 +183,9 @@ describe "RestfulWorkflow::Step" do
       end
       
       it "to a block should evaluate the block in the context of the controller to determine the previous step's URL" do
+        @controller.send(:instance_variable_set, "@current_object", "foo")
         @one.back do
-          {:controller => controller_name, :id => "five"}
+          {:controller => current_object, :id => "five"}
         end
         @one.back_url.should == {:controller => "foo", :id => "five"}
       end
