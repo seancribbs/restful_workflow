@@ -48,6 +48,7 @@ module RestfulWorkflow
 
   module Filters
     def self.included(base)
+      base.prepend_before_filter :load_current_object, :only => [:show, :update]
       base.prepend_before_filter :load_step, :only => [:show, :update]
       base.prepend_before_filter :init_steps
     end
@@ -59,6 +60,16 @@ module RestfulWorkflow
     def init_steps
       self.class.steps.each {|s| s.controller = self }
     end
+    
+    def load_current_object
+      case action_name
+      when 'show'
+        @current_object = @step.load_data
+      when 'update'
+        @current_object = @step.data.new(params[:current_object])
+        @current_object.controller = self if @current_object.respond_to?(:controller)
+      end
+    end
   end
 
   module Actions
@@ -69,20 +80,15 @@ module RestfulWorkflow
     
     def show
       before :show
-      @current_object = @step.load_data
-      after :show
       render :action => @step.name
     end
 
     def update
       before :update
-      @current_object = @step.data.new(params[:current_object])
-      @current_object.controller = self if @current_object.respond_to?(:controller)
       if @current_object.save
         redirect_to @step.forward_url
       else
         before :show
-        after :show
         render :action => @step.name
       end
     end

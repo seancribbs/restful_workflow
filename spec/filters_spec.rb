@@ -30,4 +30,16 @@ describe "RestfulWorkflow::Filters" do
     @controller.init_steps
     @step_one.controller.should == @controller
   end
+  
+  it "should load the current object in the before filter" do
+    @controller = @kontroller.new
+    @data = mock('object')
+    @controller.should_receive(:params).and_return({:id => "one"})
+    @controller.should_receive(:action_name).and_return("show")
+    @step_one.should_receive(:load_data).and_return(@data)
+    @controller.init_steps
+    @controller.load_step
+    @controller.load_current_object
+    @controller.send(:instance_variable_get, "@current_object").should == @data
+  end
 end
