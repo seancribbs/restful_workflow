@@ -3,9 +3,8 @@ require File.dirname(__FILE__) + "/spec_helper"
 describe "RestfulWorkflow::Filters" do
   before :each do
     @kontroller = Class.new(ActionController::Base)
-    @kontroller.stage do |steps|
-      @step_one = steps.one
-    end
+    @kontroller.stage do |steps| @steps = steps end
+    @step_one = @steps.one
   end
   
   it "should add a before filter to load the current step" do

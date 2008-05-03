@@ -33,7 +33,9 @@ module RestfulWorkflow
     end
 
     def load_step
-      @step = self.class.find_step(params[:id])
+      @step = returning self.class.find_step(params[:id]) do |step|
+        step.controller = self
+      end
     end
   end
 
@@ -44,7 +46,7 @@ module RestfulWorkflow
     
     def show
       before :show
-      @current_object = @step.load_data(self)
+      @current_object = @step.load_data
       after :show
       render :action => @step.name
     end
@@ -55,7 +57,7 @@ module RestfulWorkflow
       @current_object.controller = self if @current_object.respond_to?(:controller)
       after :update
       if @current_object.save
-        redirect_to @step.go_forward(self)
+        redirect_to @step.forward_url
       else
         before :show
         render :action => @step.name
@@ -77,21 +79,21 @@ module RestfulWorkflow
   end
 
   class Stage
-    attr_accessor :controller
-    def initialize(controller)
-      @controller = controller
+    attr_accessor :controller_class
+    def initialize(controller_class)
+      @controller_class = controller_class
     end
 
     def method_missing(method, *args, &block)
       step = Step.new(method.to_s, self, *args)
-      controller.steps << step
+      controller_class.steps << step
       step.instance_eval(&block) if block_given?
       step
     end
   end
 
   class Step
-    attr_accessor :stage, :name
+    attr_accessor :stage, :name, :controller
     def initialize(name, stage, *args)
       @name = name
       @stage = stage
@@ -101,7 +103,7 @@ module RestfulWorkflow
     end
     
     def controller_class
-      stage.controller
+      stage.controller_class
     end
 
     def before(symbol, &block)
@@ -128,12 +130,12 @@ module RestfulWorkflow
       @data
     end
 
-    def completed?(controller)
+    def completed?
       controller.session[controller.controller_name][name] rescue nil
     end
 
-    def load_data(controller)
-      if attributes = completed?(controller)
+    def load_data
+      if attributes = completed?
         @data.new(attributes)
       else
         @data.new
@@ -154,14 +156,15 @@ module RestfulWorkflow
       end
     end
 
-    def go_forward(controller)
+    def go_forward
       if @forward
         @forward.respond_to?(:call) ? controller.instance_eval(&@forward) : @forward
       else
         { :id => (next_step || self).name } 
       end
     end
-
+    alias :forward_url :go_forward
+    
     def back(value=nil, &block)
       raise ArgumentError, "Value or block required" unless value || block_given?
       @back = if value
@@ -176,14 +179,15 @@ module RestfulWorkflow
       end
     end
 
-    def go_back(controller)
+    def go_back
       if @back
         @back.respond_to?(:call) ? controller.instance_eval(&@back) : @back
       else
         { :id => (previous_step || self).name }
       end
     end
-
+    alias :back_url :go_back
+    
     def first?
       controller_class.steps.first == self
     end

@@ -60,21 +60,22 @@ describe "RestfulWorkflow::Step" do
       @step.data do
         column :first_name, :type => :string
       end
+      @step.controller = @controller
     end
 
     it "should not be complete if its data does not exist in the session" do
       @controller.should_receive(:session).and_return({})
-      @step.should_not be_completed(@controller)
+      @step.should_not be_completed
     end
 
     it "should be complete if its data exists in the session" do
       @controller.should_receive(:session).and_return({'foo' => {'one' => "data"}})
-      @step.should be_completed(@controller)
+      @step.should be_completed
     end
 
     it "should load its data from the session" do
       @controller.should_receive(:session).and_return({'foo' => {'one' => {'first_name' => 'Sean'}}})
-      @step.load_data(@controller).first_name.should == 'Sean'
+      @step.load_data.first_name.should == 'Sean'
     end
   end
   
@@ -88,6 +89,7 @@ describe "RestfulWorkflow::Step" do
       end
       @two = @stage.two
       @three = @stage.three
+      [@one, @two, @three].each {|s| s.controller = @controller }
     end
     
     it "should determine whether it is first" do
@@ -113,13 +115,13 @@ describe "RestfulWorkflow::Step" do
     end
     
     it "should determine the next step's URL" do
-      @one.go_forward(@controller).should == {:id => "two"}
-      @two.go_forward(@controller).should == {:id => "three"}
+      @one.go_forward.should == {:id => "two"}
+      @two.go_forward.should == {:id => "three"}
     end
     
     it "should determine the previous step's URL" do
-      @two.go_back(@controller).should == {:id => "one"}
-      @three.go_back(@controller).should == {:id => "two"}
+      @two.go_back.should == {:id => "one"}
+      @three.go_back.should == {:id => "two"}
     end
     
     describe "when first" do
@@ -128,7 +130,7 @@ describe "RestfulWorkflow::Step" do
       end
       
       it "should determine the previous step's URL to be its own" do
-        @one.go_back(@controller).should == {:id => "one"}
+        @one.go_back.should == {:id => "one"}
       end
     end
     
@@ -138,45 +140,45 @@ describe "RestfulWorkflow::Step" do
       end
       
       it "should determine the next step's URL to be its own" do
-        @three.go_forward(@controller).should == { :id => "three" }
+        @three.go_forward.should == { :id => "three" }
       end
     end
     
     describe "when the next step is assigned manually" do
       it "to a symbol should determine the next step's URL by name" do
         @one.forward :three
-        @one.go_forward(@controller).should == {:id => "three"}
+        @one.go_forward.should == {:id => "three"}
       end
       
       it "to a block should evaluate the block in the context of the controller to determine the next step's URL" do
         @one.forward do
           { :controller => controller_name, :id => "five" }
         end
-        @one.go_forward(@controller).should == {:controller => "foo", :id => "five"}
+        @one.go_forward.should == {:controller => "foo", :id => "five"}
       end
       
       it "to something other than a block or symbol should determine the next step's URL" do
         @one.forward "/"
-        @one.go_forward(@controller).should == "/"
+        @one.go_forward.should == "/"
       end
     end
     
     describe "when the previous step is assigned manually" do
       it "to a symbol should determine the previous step's URL by name" do
         @one.back :three
-        @one.go_back(@controller).should == {:id => "three"}
+        @one.go_back.should == {:id => "three"}
       end
       
       it "to a block should evaluate the block in the context of the controller to determine the previous step's URL" do
         @one.back do
           {:controller => controller_name, :id => "five"}
         end
-        @one.go_back(@controller).should == {:controller => "foo", :id => "five"}
+        @one.go_back.should == {:controller => "foo", :id => "five"}
       end
       
       it "to something other than a block or symbol should determine the previous step's URL" do
         @one.back "/"
-        @one.go_back(@controller).should == "/"
+        @one.go_back.should == "/"
       end
     end
   end

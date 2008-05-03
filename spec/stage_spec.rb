@@ -8,7 +8,7 @@ describe "RestfulWorkflow::Stage" do
   end
   
   it "should have a reference to the controller class" do
-    @stage.controller.should == @kontroller
+    @stage.controller_class.should == @kontroller
   end
   
   describe "creating steps" do
