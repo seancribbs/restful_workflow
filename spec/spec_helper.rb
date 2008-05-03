@@ -1,3 +1,5 @@
+# Thanks make_resourceful
+$: << File.dirname(__FILE__)
 $: << File.dirname(__FILE__) + '/../lib'
 require 'rubygems'
 gem 'rspec', ">=1.1.0"
