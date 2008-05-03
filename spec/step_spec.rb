@@ -15,6 +15,15 @@ describe "RestfulWorkflow::Step" do
     @step.controller_class.should == @kontroller
   end
   
+  it "should have a name" do
+    @one.name.should == "one"
+  end
+  
+  it "should have a long_name accessor" do
+    @one.should respond_to(:long_name)
+    @one.should respond_to(:long_name=)
+  end
+  
   it "should accept blocks for before callbacks" do
     @step.before(:update).should be_nil
     @step.before(:update) { "blah" }
