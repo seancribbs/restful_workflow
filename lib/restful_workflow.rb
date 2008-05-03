@@ -49,21 +49,21 @@ module RestfulWorkflow
   module Filters
     def self.included(base)
       base.prepend_before_filter :load_step, :only => [:show, :update]
+      base.prepend_before_filter :init_steps
     end
 
     def load_step
-      @step = returning self.class.find_step(params[:id]) do |step|
-        step.controller = self
-      end
+      @step = self.class.find_step(params[:id])
+    end
+    
+    def init_steps
+      self.class.steps.each {|s| s.controller = self }
     end
   end
 
   module Actions
     def index
-      first_uncompleted_step = self.class.steps.find do |step| 
-        step.controller = self; 
-        !step.completed?
-      end
+      first_uncompleted_step = self.class.steps.find {|step| !step.completed? }
       redirect_to :action => "show", :id => (first_uncompleted_step || self.class.steps.first).name
     end
     
