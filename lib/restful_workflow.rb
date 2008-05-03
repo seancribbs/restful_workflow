@@ -243,7 +243,7 @@ module RestfulWorkflow
             end
           end
         end
-      }
+      }, __FILE__, __LINE__
     end
 
     def next_step
