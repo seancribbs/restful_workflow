@@ -56,13 +56,12 @@ module RestfulWorkflow
       before :update
       @current_object = @step.data.new(params[:current_object])
       @current_object.controller = self if @current_object.respond_to?(:controller)
-      after :update
       if @current_object.save
         redirect_to @step.forward_url
       else
         before :show
-        render :action => @step.name
         after :show
+        render :action => @step.name
       end
     end
   end
@@ -94,13 +93,21 @@ module RestfulWorkflow
   end
 
   class Step
-    attr_accessor :stage, :name, :controller
+    attr_accessor :stage, :name, :controller, :long_name
     def initialize(name, stage, *args)
       @name = name
       @stage = stage
       @before_callbacks = {}
       @after_callbacks = {}
       initialize_data_class
+    end
+    
+    def long_name(new_val=nil)
+      unless new_val.nil?
+        @long_name = new_val
+      else
+        @long_name
+      end
     end
     
     def controller_class
@@ -235,6 +242,6 @@ module RestfulWorkflow
         controller_class.steps[controller_class.steps.index(self) - 1]
       end
     end
-    
+
   end
 end
