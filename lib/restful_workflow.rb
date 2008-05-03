@@ -37,6 +37,13 @@ module RestfulWorkflow
     def link_back(contents)
       link_to contents, @step.back_url
     end
+    
+    def each_step(&block)
+      @controller.class.steps.each {|step|
+        step.controller = @controller
+        yield step
+      }
+    end
   end
 
   module Filters
