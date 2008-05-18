@@ -80,7 +80,7 @@ module RestfulWorkflow
     
     def show
       before :show
-      render :action => @step.name
+      render :action => @step.view
     end
 
     def update
@@ -89,7 +89,7 @@ module RestfulWorkflow
         redirect_to @step.forward_url
       else
         before :show
-        render :action => @step.name
+        render :action => @step.view
       end
     end
   end
@@ -121,10 +121,12 @@ module RestfulWorkflow
   end
 
   class Step
-    attr_accessor :stage, :name, :controller, :long_name
+    attr_accessor :stage, :name, :controller, :long_name, :view
     def initialize(name, stage, *args)
       @name = name
+      @view = name
       @stage = stage
+      @in_menu = true
       @before_callbacks = {}
       @after_callbacks = {}
       initialize_data_class
@@ -133,6 +135,11 @@ module RestfulWorkflow
     def long_name(new_val=nil)
       @long_name = new_val if new_val
       @long_name
+    end
+
+    def view(new_val=nil)
+      @view = new_val if new_val
+      @view
     end
     
     def controller_class
@@ -164,11 +171,12 @@ module RestfulWorkflow
     end
 
     def completed?
-      controller.session[controller.controller_name][name] rescue nil
+      # controller.session[controller.controller_name][name] rescue nil
+      load_data.valid?
     end
 
     def load_data
-      if attributes = completed?
+      if attributes = controller.session[controller.controller_name][name] rescue nil
         @data.new(attributes)
       else
         @data.new
