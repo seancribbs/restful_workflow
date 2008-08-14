@@ -48,7 +48,8 @@ module RestfulWorkflow
 
   module Filters
     def self.included(base)
-      base.prepend_before_filter :load_current_object, :only => [:show, :update]
+      base.before_filter :init_data, :only => [:show, :update]
+      base.before_filter :load_current_object, :only => [:show, :update]
       base.prepend_before_filter :load_step, :only => [:show, :update]
       base.prepend_before_filter :init_steps
     end
@@ -60,6 +61,10 @@ module RestfulWorkflow
     def init_steps
       self.class.steps.each {|s| s.controller = self }
     end
+
+    def init_data
+      @step.eval_deferred_data_class
+    end
     
     def load_current_object
       case action_name
@@ -67,9 +72,10 @@ module RestfulWorkflow
         @current_object = @step.load_data
       when 'update'
         @current_object = @step.data.new(params[:current_object])
-        @current_object.controller = self if @current_object.respond_to?(:controller)
       end
+      @current_object.controller = self if @current_object.respond_to?(:controller)
     end
+    
   end
 
   module Actions
@@ -79,6 +85,7 @@ module RestfulWorkflow
     end
     
     def show
+      @step.data_block
       before :show
       render :action => @step.view
     end
@@ -121,7 +128,7 @@ module RestfulWorkflow
   end
 
   class Step
-    attr_accessor :stage, :name, :controller, :long_name, :view
+    attr_accessor :stage, :name, :controller, :long_name, :view, :in_menu, :data_block
     def initialize(name, stage, *args)
       @name = name
       @view = name
@@ -136,10 +143,19 @@ module RestfulWorkflow
       @long_name = new_val if new_val
       @long_name
     end
-
+    
     def view(new_val=nil)
       @view = new_val if new_val
       @view
+    end
+
+    def in_menu(new_val=nil)
+      @in_menu = new_val unless new_val.nil?
+      @in_menu
+    end
+    
+    def in_menu?
+      @in_menu
     end
     
     def controller_class
@@ -160,12 +176,17 @@ module RestfulWorkflow
       @after_callbacks[symbol.to_sym]
     end
 
-    def data(value=nil, &block)
-      if value
-        @data = value
+    def data(*args, &block)
+      options = args.extract_options!
+      if args.first
+        @data = args.first
       elsif block_given?
-        initialize_data_class
-        @data.class_eval(&block)
+        initialize_data_class 
+        unless options[:defer]
+          @data.class_eval(&block)
+        else
+          @data_block = block
+        end
       end
       @data
     end
@@ -176,6 +197,7 @@ module RestfulWorkflow
     end
 
     def load_data
+      #  !@data_block && 
       if attributes = controller.session[controller.controller_name][name] rescue nil
         @data.new(attributes)
       else
@@ -246,11 +268,20 @@ module RestfulWorkflow
       end
     end
     
+    def eval_deferred_data_class
+      if data_block
+        initialize_data_class
+        data.controller = controller if data.respond_to?(:controller)
+        data.class_eval(&data_block) 
+      end
+    end
+    
     private
+
     def initialize_data_class
       @data = Class.new(ActiveForm)
       @data.class_eval %Q{
-        attr_accessor :controller
+        cattr_accessor :controller
         def save
           returning super do |valid|
             if valid
