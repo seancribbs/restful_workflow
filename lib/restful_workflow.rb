@@ -153,11 +153,15 @@ module RestfulWorkflow
       @in_menu = new_val unless new_val.nil?
       @in_menu
     end
+    def in_menu(new_val=nil)
+      @in_menu = new_val unless new_val.nil?
+      @in_menu
+    end
     
     def in_menu?
       @in_menu
     end
-    
+
     def controller_class
       stage.controller_class
     end
@@ -285,8 +289,9 @@ module RestfulWorkflow
         def save
           returning super do |valid|
             if valid
-              controller.session[controller.controller_name] ||= {}
-              controller.session[controller.controller_name]['#{name}'] = self.attributes
+              # No Session store for now
+              # controller.session[controller.controller_name] ||= {}
+              # controller.session[controller.controller_name]['#{name}'] = self.attributes
             end
           end
         end
