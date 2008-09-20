@@ -56,6 +56,9 @@ module RestfulWorkflow
 
     def load_step
       @step = self.class.find_step(params[:id])
+      if @step.blank?
+        redirect_to :action => "show", :id => self.class.steps.first.name
+      end
     end
     
     def init_steps
@@ -149,10 +152,6 @@ module RestfulWorkflow
       @view
     end
 
-    def in_menu(new_val=nil)
-      @in_menu = new_val unless new_val.nil?
-      @in_menu
-    end
     def in_menu(new_val=nil)
       @in_menu = new_val unless new_val.nil?
       @in_menu
